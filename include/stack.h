@@ -797,10 +797,9 @@ public:
 		}
 	}
 
-
 };
 template<class T>
-class cell {
+class cell    {
 private:
 	T data;
 	int key;

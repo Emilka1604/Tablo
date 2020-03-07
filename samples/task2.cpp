@@ -40,7 +40,7 @@ void main() {
 
 
 	}*/
-	polynom a,b,c,d,e,f,g,h;
+	polynom  a,b,c,d,e,f,g,h;
 	a.parser("X^2+1");
 	b.parser("Y");
 	c.parser("Z^8-11");
