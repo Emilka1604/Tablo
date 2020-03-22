@@ -1,8 +1,8 @@
 #include "stack.h"
 #include <gtest.h>
 
-TEST(tablo<polynom>, can_push_element) {
-	tablo<polynom> t;
+TEST(Unordered_table<polynom>, can_push_element) {
+	Unordered_table<polynom> t;
 	polynom p;
 	p.parser("X^2");
 	t.push(1, p);

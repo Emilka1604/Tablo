@@ -4,69 +4,7 @@
 #include <exception>
 #include <string>
 #include <algorithm>
-template<typename T>
-int PARTITION(T* a, int left, int right) {
-	T b;
-	T k = a[right];
-	int i = left - 1;
-	int j = left;
-	while (j < right) {
-		if (a[j] <= k) {
-			i++;
-			b = a[i];
-			a[i] = a[i + 1];
-			a[i + 1] = b;
-			//std::swap(a[i], a[j]);
-		}
-		j++;
-	}
-	//std::swap(k, a[i + 1]);
-	b = a[k];
-	a[k] = a[i + 1];
-	a[i + 1] = b;
-	return i + 1;
-}
-template<typename T>
-void qsort(T* a, int left, int right )
-{
-	if (right > left) {
-		int q = PARTITION(a, left, right);
-		qsort(a, left, q - 1);
-		qsort(a, q + 1, right);
-	}
-}
-template<typename T>
-std::vector<T> Qsort(std::vector<T> v) {
-	if (v.size() != 0) {
-		int k = v.size() / 2;
-		std::vector<T> vm;
-		std::vector<T> vb;
-		int i;
-		for (i = 0; i < v.size(); i++) {
-
-			if (v[i] < v[k])
-				vm.push_back(v[i]);
-			else
-				if (i != k)
-					vb.push_back(v[i]);
-
-		}
-		if (vm.size() > 1 || vb.size() > 1) {
-			std::vector<T> v1 = Qsort(vm);
-			std::vector<T> v2 = Qsort(vb);
-			v1.push_back(v[k]);
-			for (i = 0; i < v2.size(); i++)
-				v1.push_back(v2[i]);
-			return v1;
-		}
-		else {
-			vm.push_back(v[k]);
-			for (i = 0; i < vb.size(); i++)
-				vm.push_back(vb[i]);
-			return vm;
-		}
-	}
-}
+#define M 6
 
 template<class T>
 class List {
@@ -311,56 +249,6 @@ List<T>& List<T>::operator=(List<T>& lst) {
 		tmp->next = nullptr;
 	}
 	return *this;
-}
-template<typename T>
-T& middle_elem(List<T>& lst) {   //Задача найти средний элемент в списке
-	List<T>::iterator it1 = lst.begin();
-	List<T>::iterator it2 = lst.begin();
-	if (it1 != lst.end()) {
-		it1++;
-		if (it1 == lst.end())
-			return *it2;
-		else {
-			while (it1 != lst.end()) {
-				it2++;
-				it1++;
-				if (it1 == lst.end())
-					break;
-				it1++;
-			}
-			return *it2;
-		}
-	}
-	else {
-		std::exception ex("Empty list");
-		throw ex;
-	}
-}
-template<typename T>
-T& k_elem(List<T>& lst, int k){  //Задача найти k-й элемент с конца
-	List<T>::iterator it1 = lst.begin();
-	List<T>::iterator it2 = lst.begin();
-	if (it1 != lst.end()) {
-		for (int i = 0; i < k - 1; i++) {
-			it1++;
-			if (it1 == lst.end()) {
-				std::exception ex("k < size");
-				throw ex;
-			}
-		}
-		it1++;
-		while (it1 != lst.end()) {
-			it2++;
-			it1++;
-		}
-		return *it2;
-
-		
-	}
-	else {
-		std::exception ex("Empty list");
-		throw ex;
-	}
 }
 class elem {
 	private:
@@ -797,10 +685,9 @@ public:
 		}
 	}
 
-
 };
 template<class T>
-class cell {
+class cell    {
 private:
 	T data;
 	int key;
@@ -815,10 +702,15 @@ public:
 		this->key = key;
 		this->data = data;
 	}
+	bool operator>(cell<T>& c)
+	{
+		return getkey() > c.getkey();
+	}
 };
-template<class T>
-class tablo {
-private:
+template <class T>
+class Table
+{
+protected:
 	cell<T>* mas;
 	int size;
 	int Msize;
@@ -826,29 +718,59 @@ public:
 	int getsize() {
 		return size;
 	}
-	tablo() {
+	T& getelem(int key)
+	{
+		cell<T>* a = search(key, 1, 1);
+		if (!a)
+		{
+			std::exception ex("В таблице нет элемента с таким ключем");
+			throw ex;
+		}
+		return a->getdata();
+
+
+	}
+	friend std::ostream& operator<<(std::ostream& ostr, Table& t) {
+		ostr << "Ключ" << '\t' << "Значение" << '\n' << '\n';
+		for (int i = 0; i < t.getsize(); i++)
+			ostr << t.mas[i].getkey() << '\t' << t.mas[i].getdata() << '\n' << '\n';
+		return ostr;
+	}
+	virtual int search(int, int, int) = 0;
+	virtual void insert(int, T) = 0;
+	virtual void remove(int) = 0;
+};
+template<class T>
+class Unordered_table: public Table<T> {
+public:
+	Unordered_table() {
 		size = 0;
-		Msize = 6;
-		cell<T>* mas1 = new cell<T>[6];
+		Msize = M;
+		cell<T>* mas1 = new cell<T>[M];
 		mas = mas1;
 	}
-	cell<T>* search(int key) {
+	~Unordered_table()
+	{
+		delete[] mas;
+	}
+	int search(int key, int left_border, int right_border) override{
 		for (int i = 0; i < size; i++) {
 			if ( mas[i].getkey() == key )
-				return &mas[i];
+				return i;
 		}
-		return NULL;
+		return -1;
 	}
-	void push(int key, T data) {
-		if (search(key)) {
+	
+	void insert(int key, T data) override{
+		if (search(key, 1, 1) != -1) {
 			std::exception ex("Ключ не уникален");
 			throw ex;
 		}
 		cell<T> c(key, data);
-		if (size < Msize) {
-			mas[size] = c;
-		}
-		else {
+		mas[size] = c;
+		size++;
+		if(size == Msize)
+		{
 			Msize = Msize / 2 * 3;
 			cell<T>* mas1 = new cell<T>[Msize];
 				for (int i = 0; i < size; i++)
@@ -857,35 +779,17 @@ public:
 			delete [] mas;
 			mas = mas1;
 		}
-		size++;
 
 	}
-	T& getelem (int key) {
-		cell<T>* a = search(key);
-		if (!a) {
+	void remove(int key) override{
+		int j = search(key, 1, 1);
+		if (j == -1) {
 			std::exception ex("Данного элемента нет в таблице");
 			throw ex;
 		}
-		return a->getdata;
-	}
-	friend std::ostream& operator<<(std::ostream& ostr, tablo& t) {
-		ostr << "Ключ" << "     " << "Значение" << '\n' << '\n';
-		for (int i = 0; i < t.getsize(); i++) 
-			ostr << t.mas[i].getkey() << "     " << t.mas[i].getdata()<<'\n'<<'\n';
-		return ostr;
-	}
-	void del(int key) {
-		cell<T>* a = search(key);
-		if (!a) {
-			std::exception ex("Данного элемента нет в таблице");
-			throw ex;
-		}
-		cell<T>* b = new cell<T>;
-		*b = *a;
-		*a = mas[size - 1];
-		mas[size - 1] = *b;
-		if (size == Msize / 2 && Msize > 6) {
-			size--;
+		std::swap(mas[i], mas[size - 1])
+		size--;
+		if (size == Msize / 2 && Msize > M) {
 			Msize = size / 2 * 3;
 			cell<T>* mas1 = new cell<T>[Msize];
 			for (int i = 0; i < size; i++)
@@ -893,10 +797,106 @@ public:
 			delete[] mas;
 			mas = mas1;
 		}
+	}
+	/*friend std::ostream& operator<<(std::ostream& ostr, Unordered_table& t) {
+		ostr << "Ключ" << "     " << "Значение" << '\n' << '\n';
+		for (int i = 0; i < t.getsize(); i++)
+			ostr << t.mas[i].getkey() << "     " << t.mas[i].getdata() << '\n' << '\n';
+		return ostr;
+	}*/
+
+
+};
+template<class T>
+class Ordered_table : public Table<T> {
+public:
+	Ordered_table()
+	{
+		size = 0;
+		Msize = M;
+		cell<T>* mas1 = new cell<T>[M];
+		mas = mas1;
+	}
+	~Ordered_table()
+	{
+		delete[] mas;
+	}
+	int search(int key, int left_border, int right_border) override
+	{
+		if (left_border > right_border || size == 0)
+		{
+			return -1;
+		} 
+		int middle = (left_border + right_border) / 2;
+		if (mas[middle].getkey() > key)
+		{
+			return search(key, left_border, middle - 1);
+		}
 		else
-			size--;
+	        if (mas[middle].getkey() == key)
+		    {
+			return middle;
+		    }
+			else
+			    {  
+			    return search(key, middle + 1, right_border);
+		        }
 	}
 
+	void insert(int key, T data) override
+	{
+		if (search(key, 0, size - 1) != -1) {
+			std::exception ex("Ключ не уникален");
+			throw ex;
+		}
+		cell<T> c(key, data);
+		mas[size] = c;
+		size++;
+		if(size == Msize)
+		{
+			Msize = Msize / 2 * 3;
+			cell<T>* mas1 = new cell<T>[Msize];
+			for (int i = 0; i < size; i++)
+				mas1[i] = mas[i];
+			mas1[size] = c;
+			delete[] mas;
+			mas = mas1;
+		}
+		int k = size - 1;
+		while (k && mas[k - 1] > mas[k] )
+		{
+			std::swap(mas[k - 1], mas[k]);
+			k--;
+		}
+	}
+	void remove(int key)
+	{
+		int j = search(key, 0, size - 1);
+		if (j == -1) {
+			std::exception ex("Данного элемента нет в таблице");
+			throw ex;
+		}
+		while (j != size - 1)
+		{
+			std::swap(mas[j], mas[j + 1]);
+			j++;
+		}
+		size--;
+		if (size == Msize / 2 && Msize > M) {
+			Msize = size / 2 * 3;
+			cell<T>* mas1 = new cell<T>[Msize];
+			for (int i = 0; i < size; i++)
+				mas1[i] = mas[i];
+			delete[] mas;
+			mas = mas1;
+		}
+	}
+	/*friend std::ostream& operator<<(std::ostream& ostr, Ordered_table& t) {
+		ostr << "Ключ" << "     " << "Значение" << '\n' << '\n';
+		for (int i = 0; i < t.getsize(); i++)
+			ostr << t.mas[i].getkey() << "     " << t.mas[i].getdata() << '\n' << '\n';
+		return ostr;
+	}*/
 
 
 };
